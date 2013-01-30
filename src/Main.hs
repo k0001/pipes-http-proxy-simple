@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 
@@ -7,19 +6,19 @@ module Main where
 
 import           Control.Applicative
 import           Control.Error
-import           qualified Control.Exception as E
 import           Control.Monad
 import           Control.Monad.Trans.Class        (lift)
 import           Control.Proxy                    ((<-<), (>->))
+import           Data.Monoid
+import qualified Control.Exception as E
 import qualified Control.Proxy                    as P
+import qualified Control.Proxy.Safe               as P
 import qualified Control.Proxy.Attoparsec         as PA
+import qualified Control.Proxy.Trans.Attoparsec   as PA
 import qualified Control.Proxy.Network.TCP        as PN
 import qualified Control.Proxy.Network.TCP.Simple as PN
-import qualified Control.Proxy.Safe               as P
-import qualified Control.Proxy.Trans.Attoparsec   as PA
 import qualified Data.Attoparsec.ByteString.Char8 as AB
 import qualified Data.ByteString.Char8            as B
-import           Data.Monoid
 import qualified RFC2616                          as R
 
 
