@@ -73,7 +73,7 @@ proxyReqD () = go where
        Nothing -> go -- ^ Figure out what to do with leftovers
        Just rh -> do
          let outgoing () = do
-               P.respond $ R.renderRequest (toFullPathRequest $ reqhReqLine rh)
+               P.respond $ R.renderRequest (proxiedReqLine    $ reqhReqLine rh)
                         <> R.renderHeaders (proxiedReqHeaders $ reqhHeaders rh)
                PA.takeInputWithLeftoversD (maybe 0 id $ reqhContentLength rh) ()
              (host, port) = (B.unpack $ reqhHost rh, reqhPort rh)
@@ -138,11 +138,17 @@ mayParse p (Just x) = hush $ AB.parseOnly p x
 uriFullPath :: URI -> String
 uriFullPath u = uriPath u <> uriQuery u <> uriFragment u
 
-toFullPathRequest :: R.Request -> R.Request
-toFullPathRequest req =
-    case parseURIReference (B.unpack $ R.requestUri req) of
-            Nothing -> req
-            Just u  -> req { R.requestUri = B.pack $ uriFullPath u }
+requestUriFullPath' :: String -> String
+requestUriFullPath' b = maybe b uriFullPath $ parseURIReference b
+
+requestUriFullPath :: B.ByteString -> B.ByteString
+requestUriFullPath = B.pack . requestUriFullPath' . B.unpack
+
+proxiedReqLine :: R.Request -> R.Request
+proxiedReqLine r = r
+    { R.requestUri     = requestUriFullPath $ R.requestUri r
+    , R.requestVersion = "1.0"
+    }
 
 skippableReqHeader :: B.ByteString -> Bool
 skippableReqHeader n = f1 || f2 where
@@ -151,7 +157,10 @@ skippableReqHeader n = f1 || f2 where
     f2 = "proxy-" `B.isPrefixOf` n'
 
 proxiedReqHeaders :: [R.Header] -> [R.Header]
-proxiedReqHeaders = R.headerFilter (not . skippableReqHeader)
+proxiedReqHeaders hs = R.Header "Connection" ["close"]
+                     : R.headerFilter (not . skippableReqHeader) hs
+
+
 
 hvContentLength :: Integral a => [R.Header] -> Maybe a
 hvContentLength = mayParse AB.decimal . R.headerLookup1 "Content-Length"
