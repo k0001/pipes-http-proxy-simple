@@ -19,6 +19,7 @@ module RFC2616
     , response
     , responseLine
     , lowerHeader
+    , headerFilter
     , headerFind
     , headerLookup
     , headerLookup1
@@ -98,6 +99,12 @@ lowerHeader (Header n vs) = Header (B.map toLower n) (map (B.map toLower) vs)
   where toLower w | w >= 65 && w <= 90 = w + 32
                   | otherwise          = w
 
+headerFilter :: (B.ByteString -> Bool) -> [Header] -> [Header]
+headerFilter _ []     = []
+headerFilter p (h@(Header n vs):hs)
+  | p n       = h : headerFilter p hs
+  | otherwise = headerFilter p hs
+
 headerFind :: (B.ByteString -> Bool) -> [Header] -> Maybe [B.ByteString]
 headerFind _ []     = Nothing
 headerFind p ((Header n vs):hs)
@@ -126,7 +133,7 @@ renderResponse r = mconcat [ "HTTP/", responseVersion r
                            , "\r\n" ]
 
 renderHeader :: Header -> B.ByteString
-renderHeader (Header n vs) = n <> ": " <> mconcat (renderValue <$> vs)
+renderHeader (Header n vs) = n <> ":" <> mconcat (renderValue <$> vs)
   where renderValue v = " " <> v <> "\r\n"
 
 renderHeaders :: [Header] -> B.ByteString

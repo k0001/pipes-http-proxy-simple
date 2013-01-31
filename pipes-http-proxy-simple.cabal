@@ -35,7 +35,8 @@ executable pipes-http-proxy-simple
     pipes-network >=0.1,
     transformers >=0.2,
     errors >=1.3.1,
-    bytestring
+    bytestring,
+    network
 
 
 
